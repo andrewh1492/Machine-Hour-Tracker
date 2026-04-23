@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Machine Hours</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --gold: #d4a017;
+    --gold-light: #f0c040;
+    --red: #c0392b;
+    --green: #27ae60;
+    --text: #e8e8e8;
+    --muted: #666;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--gold);
+    padding: 14px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  header h1 {
+    font-family: var(--font-display);
+    font-size: 26px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .date-badge {
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+    line-height: 1.4;
+  }
+
+  .date-badge span {
+    display: block;
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 12px 8px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--muted);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+
+  .tab.active {
+    color: var(--gold);
+    border-bottom: 2px solid var(--gold);
+  }
+
+  .view { display: none; padding: 16px; }
+  .view.active { display: block; }
+
+  /* LOG ENTRY FORM */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .form-card h2 {
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: 1.5px;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .field-row.three { grid-template-columns: 1fr 1fr 1fr; }
+  .field-row.full { grid-template-columns: 1fr; }
+
+  .field label {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  .field input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 16px;
+    font-weight: 600;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+
+  .field input:focus { border-color: var(--gold); }
+
+  .hours-display {
+    background: var(--surface2);
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--gold-light);
+    text-align: center;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hours-label {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  .add-btn {
+    width: 100%;
+    background: var(--gold);
+    color: #000;
+    border: none;
+    border-radius: 4px;
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: 2px;
+    padding: 13px;
+    cursor: pointer;
+    margin-top: 14px;
+    transition: background 0.15s;
+    -webkit-appearance: none;
+  }
+
+  .add-btn:active { background: var(--gold-light); }
+
+  /* ENTRIES LIST */
+  .day-total {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .day-total-label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .day-total-val {
+    font-size: 24px;
+    color: var(--gold-light);
+    font-weight: 600;
+  }
+
+  .entry-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 13px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+  }
+
+  .entry-machine {
+    font-family: var(--font-display);
+    font-size: 26px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    min-width: 52px;
+    line-height: 1;
+  }
+
+  .entry-details { flex: 1; }
+
+  .entry-range-label {
+    font-size: 9px;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .entry-range {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .entry-hours {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .entry-hours strong {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold-light);
+  }
+
+  .entry-time {
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--red);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 6px;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+  }
+
+  .delete-btn:active { opacity: 1; }
+
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 1px;
+    padding: 40px 20px;
+  }
+
+  .empty-state .icon { font-size: 36px; margin-bottom: 10px; }
+
+  /* HISTORY VIEW */
+  .day-group { margin-bottom: 20px; }
+
+  .day-header {
+    font-family: var(--font-display);
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .day-header-total {
+    font-size: 13px;
+    color: var(--gold-light);
+    font-family: var(--font-mono);
+  }
+
+  /* EXPORT */
+  .export-btn {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 12px;
+    cursor: pointer;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+
+  .export-btn:active { background: var(--surface2); }
+
+  .clear-btn {
+    width: 100%;
+    background: none;
+    border: 1px solid var(--red);
+    color: var(--red);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 10px;
+    cursor: pointer;
+    text-transform: uppercase;
+    margin-top: 20px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--green);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 10px 20px;
+    border-radius: 20px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 200;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚙ MACHINE HRS</h1>
+  <div class="date-badge">
+    <span id="todayDate">—</span>
+    Knife River
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('log')">LOG</button>
+  <button class="tab" onclick="switchTab('history')">HISTORY</button>
+</div>
+
+<!-- LOG TAB -->
+<div id="tab-log" class="view active">
+  <div class="form-card">
+    <h2>New Entry</h2>
+
+    <div class="field-row full">
+      <div class="field">
+        <label>Machine # / Name</label>
+        <input type="text" id="machineId" placeholder="e.g. 320, CAT D6" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Start Hours</label>
+        <input type="number" id="startHours" placeholder="0.0" step="0.1" min="0" inputmode="decimal" oninput="calcHours()">
+      </div>
+      <div class="field">
+        <label>End Hours</label>
+        <input type="number" id="endHours" placeholder="0.0" step="0.1" min="0" inputmode="decimal" oninput="calcHours()">
+      </div>
+    </div>
+
+    <div class="field-row full">
+      <div>
+        <div class="hours-label">Hours Worked</div>
+        <div class="hours-display" id="hoursCalc">—</div>
+      </div>
+    </div>
+
+    <button class="add-btn" onclick="addEntry()">+ ADD ENTRY</button>
+  </div>
+
+  <!-- Today's entries live below the form -->
+  <div class="day-total">
+    <div>
+      <div class="day-total-label">Total Today</div>
+      <div id="todayLabel" style="font-size:11px;color:var(--muted)">—</div>
+    </div>
+    <div class="day-total-val" id="todayTotal">0.0 hrs</div>
+  </div>
+  <div id="todayList"></div>
+</div>
+
+<!-- HISTORY TAB -->
+<div id="tab-history" class="view">
+  <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+  <div id="historyList"></div>
+  <button class="clear-btn" onclick="clearAll()">⚠ Clear All Data</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const STORAGE_KEY = 'machineHoursLog';
+
+  function getEntries() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function saveEntries(entries) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  }
+
+  function today() {
+    return new Date().toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric', year:'numeric' });
+  }
+
+  function todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function nowTime() {
+    return new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+  }
+
+  document.getElementById('todayDate').textContent = today();
+
+  function calcHours() {
+    const s = parseFloat(document.getElementById('startHours').value);
+    const e = parseFloat(document.getElementById('endHours').value);
+    const el = document.getElementById('hoursCalc');
+    if (!isNaN(s) && !isNaN(e) && e >= s) {
+      const h = Math.round((e - s) * 10) / 10;
+      el.textContent = h.toFixed(1) + ' hrs';
+    } else {
+      el.textContent = '—';
+    }
+  }
+
+  function addEntry() {
+    const machine = document.getElementById('machineId').value.trim();
+    const s = parseFloat(document.getElementById('startHours').value);
+    const e = parseFloat(document.getElementById('endHours').value);
+
+    if (!machine) { showToast('Enter a machine number', '#c0392b'); return; }
+    if (isNaN(s) || isNaN(e)) { showToast('Enter start and end hours', '#c0392b'); return; }
+    if (e < s) { showToast('End must be ≥ start hours', '#c0392b'); return; }
+
+    const hours = Math.round((e - s) * 10) / 10;
+    const entry = {
+      id: Date.now(),
+      machine,
+      start: s,
+      end: e,
+      hours,
+      date: todayKey(),
+      dateLabel: today(),
+      time: nowTime()
+    };
+
+    const entries = getEntries();
+    entries.unshift(entry);
+    saveEntries(entries);
+
+    // reset
+    document.getElementById('machineId').value = '';
+    document.getElementById('startHours').value = '';
+    document.getElementById('endHours').value = '';
+    document.getElementById('hoursCalc').textContent = '—';
+
+    showToast(`✓ ${hours.toFixed(1)} hrs logged for #${machine}`);
+    renderToday();
+    renderHistory();
+  }
+
+  function deleteEntry(id) {
+    const entries = getEntries().filter(e => e.id !== id);
+    saveEntries(entries);
+    renderToday();
+    renderHistory();
+    showToast('Entry removed', '#c0392b');
+  }
+
+  function renderToday() {
+    const key = todayKey();
+    const entries = getEntries().filter(e => e.date === key);
+    const list = document.getElementById('todayList');
+    const total = entries.reduce((sum, e) => sum + e.hours, 0);
+    const totalRounded = Math.round(total * 10) / 10;
+
+    document.getElementById('todayTotal').textContent = totalRounded.toFixed(1) + ' hrs';
+    document.getElementById('todayLabel').textContent = today();
+
+    if (entries.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="icon">📋</div>No entries yet today.<br>Add a machine above.</div>`;
+      return;
+    }
+
+    list.innerHTML = entries.map(e => entryHTML(e)).join('');
+  }
+
+  function renderHistory() {
+    const entries = getEntries();
+    const historyEl = document.getElementById('historyList');
+
+    if (entries.length === 0) {
+      historyEl.innerHTML = `<div class="empty-state"><div class="icon">📂</div>No entries yet.</div>`;
+      return;
+    }
+
+    // Group by date
+    const groups = {};
+    entries.forEach(e => {
+      if (!groups[e.date]) groups[e.date] = { label: e.dateLabel, entries: [] };
+      groups[e.date].entries.push(e);
+    });
+
+    const sortedDates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+    historyEl.innerHTML = sortedDates.map(date => {
+      const g = groups[date];
+      const total = Math.round(g.entries.reduce((s, e) => s + e.hours, 0) * 10) / 10;
+      return `
+        <div class="day-group">
+          <div class="day-header">
+            <span>${g.label}</span>
+            <span class="day-header-total">${total.toFixed(1)} hrs</span>
+          </div>
+          ${g.entries.map(e => entryHTML(e)).join('')}
+        </div>`;
+    }).join('');
+  }
+
+  function entryHTML(e) {
+    return `
+      <div class="entry-card">
+        <div class="entry-machine">#${e.machine}</div>
+        <div class="entry-details">
+          <div class="entry-range-label">Hour Range</div>
+          <div class="entry-range">${e.start.toFixed(1)} → ${e.end.toFixed(1)}</div>
+          <div class="entry-hours"><strong>${e.hours.toFixed(1)} hrs</strong> worked</div>
+        </div>
+        <div>
+          <div class="entry-time">${e.time || ''}</div>
+          <button class="delete-btn" onclick="deleteEntry(${e.id})">✕</button>
+        </div>
+      </div>`;
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', ['log','history'][i] === name);
+    });
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    if (name === 'log') renderToday();
+    if (name === 'history') renderHistory();
+  }
+
+  function exportCSV() {
+    const entries = getEntries();
+    if (entries.length === 0) { showToast('No data to export', '#c0392b'); return; }
+    const header = 'Date,Machine,Start Hours,End Hours,Hours Worked,Time\n';
+    const rows = entries.map(e =>
+      `"${e.dateLabel}","${e.machine}",${e.start},${e.end},${e.hours},"${e.time || ''}"`
+    ).join('\n');
+    const blob = new Blob([header + rows], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `machine-hours-${todayKey()}.csv`;
+    a.click();
+    showToast('CSV exported!');
+  }
+
+  function clearAll() {
+    if (confirm('Clear ALL machine hour logs? This cannot be undone.')) {
+      localStorage.removeItem(STORAGE_KEY);
+      renderToday();
+      renderHistory();
+      showToast('All data cleared', '#c0392b');
+    }
+  }
+
+  function showToast(msg, color = '#27ae60') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = color;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // Init
+  renderToday();
+  renderHistory();
+</script>
+</body>
+</html>
